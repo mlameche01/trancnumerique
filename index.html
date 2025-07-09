@@ -23,6 +23,13 @@
       text-align: center;
       padding: 1rem;
     }
+    header div {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 600px;
+      margin: auto;
+    }
     main {
       padding: 2rem;
       max-width: 600px;
@@ -108,39 +115,40 @@
 </head>
 <body>
   <header>
-    <h1>🔐 FRN Wallet Sécurisé</h1>
+    <div>
+      <h1 id="title">🔐 FRN Wallet Sécurisé</h1>
+      <button id="langSwitch" onclick="toggleLang()" style="background: none; border: none; font-size: 1.5rem;">🇫🇷</button>
+    </div>
   </header>
   <main>
     <div class="card" id="pinSetupBox" style="display:none;">
-      <div class="intro">
+      <div class="intro" id="intro1">
         💡 <strong>Franc Numérique (FRN)</strong> est un token digital adossé à la blockchain XODEX, visant à simplifier les échanges en Afrique.  
         Il permet des transactions rapides, sécurisées et sans frais.
       </div>
-      <h3>Créer un code PIN</h3>
+      <h3 id="pinCreate">Créer un code PIN</h3>
       <input type="password" id="newPin" placeholder="Nouveau code PIN" />
       <button onclick="saveNewPIN()">Valider</button>
     </div>
 
     <div class="card" id="pinLoginBox" style="display:none;">
-      <div class="intro">
+      <div class="intro" id="intro2">
         💡 <strong>Franc Numérique (FRN)</strong> est un token digital adossé à la blockchain XODEX, visant à simplifier les échanges en Afrique.  
         Il permet des transactions rapides, sécurisées et sans frais.
       </div>
-      <h3>Entrez votre code PIN</h3>
+      <h3 id="pinEnter">Entrez votre code PIN</h3>
       <input type="password" id="pinInput" placeholder="Code PIN" />
       <button onclick="checkPIN()">Déverrouiller</button>
     </div>
 
     <div class="card" id="walletBox" style="display:none;">
-      <p><strong>Adresse :</strong> <span id="address">...</span></p>
+      <p><strong id="addressLabel">Adresse :</strong> <span id="address">...</span></p>
 
-      <!-- 🚰 BOUTON FAUCET -->
       <a href="https://forms.gle/QK4vQdaHgee31bGH9" target="_blank">
-        <button>🚰 Obtenir FRN (baridiweb)</button>
+        <button id="faucetGet">🚰 Obtenir FRN (baridiweb)</button>
       </a>
-      <!-- 🚰 BOUTON FAUCET -->
       <a href="https://docs.google.com/forms/d/e/1FAIpQLSePbCfjdDIHt7TQcS_Ibo9JppbBlX4kLzLazuwFOrbnYyGHsA/viewform?usp=dialog" target="_blank">
-        <button>🚰 Vendre FRN (baridiweb)</button>
+        <button id="faucetSell">🚰 Vendre FRN (baridiweb)</button>
       </a>
 
       <div id="qrcode"></div>
@@ -167,14 +175,62 @@
       <p id="status"></p>
 
       <div class="card">
-        <h4>Historique des envois</h4>
+        <h4 id="historyTitle">Historique des envois</h4>
         <ul id="historyList"></ul>
       </div>
     </div>
   </main>
 
-  <!-- ✅ Script principal + Service Worker -->
   <script src="wallet.js"></script>
+  <script>
+    let currentLang = localStorage.getItem("frn_lang") || "fr";
+
+    function toggleLang() {
+      currentLang = currentLang === "fr" ? "en" : "fr";
+      localStorage.setItem("frn_lang", currentLang);
+      updateLanguage();
+    }
+
+    function updateLanguage() {
+      document.getElementById("langSwitch").innerText = currentLang === "fr" ? "🇫🇷" : "🇬🇧";
+
+      const t = {
+        fr: {
+          title: "🔐 FRN Wallet Sécurisé",
+          pinCreate: "Créer un code PIN",
+          pinEnter: "Entrez votre code PIN",
+          send: "Envoyer",
+          addressLabel: "Adresse :",
+          faucetGet: "🚰 Obtenir FRN (baridiweb)",
+          faucetSell: "🚰 Vendre FRN (baridiweb)",
+          historyTitle: "Historique des envois"
+        },
+        en: {
+          title: "🔐 FRN Secure Wallet",
+          pinCreate: "Create a PIN Code",
+          pinEnter: "Enter your PIN Code",
+          send: "Send",
+          addressLabel: "Address:",
+          faucetGet: "🚰 Get FRN (baridiweb)",
+          faucetSell: "🚰 Sell FRN (baridiweb)",
+          historyTitle: "Transaction History"
+        }
+      };
+
+      const lang = t[currentLang];
+      document.getElementById("title").innerText = lang.title;
+      document.getElementById("pinCreate").innerText = lang.pinCreate;
+      document.getElementById("pinEnter").innerText = lang.pinEnter;
+      document.getElementById("addressLabel").innerText = lang.addressLabel;
+      document.querySelector("button[onclick='sendTokens()']").innerText = lang.send;
+      document.getElementById("faucetGet").innerText = lang.faucetGet;
+      document.getElementById("faucetSell").innerText = lang.faucetSell;
+      document.getElementById("historyTitle").innerText = lang.historyTitle;
+    }
+
+    window.addEventListener("DOMContentLoaded", updateLanguage);
+  </script>
+
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
