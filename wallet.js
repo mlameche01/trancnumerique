@@ -1,7 +1,7 @@
 // wallet.js
 const TOKEN_ADDRESS = "0x64e73E00a9d37188C0e25EC5cfdDCD856Ad7a77D";
 const RPC = "https://mainnet.xo-dex.com/rpc";
-const FRN_TO_USD = 10;
+const FRN_TO_DZD = 120; // 1 FRN = 120 DZD
 
 let provider, wallet, signer, token, decimals = 18;
 let scanner;
@@ -62,7 +62,9 @@ async function updateBalance() {
     const raw = await token.balanceOf(wallet.address);
     const frn = parseFloat(ethers.utils.formatUnits(raw, decimals));
     document.getElementById("balance").innerText = frn.toFixed(4) + " FRN";
-    document.getElementById("usdValue").innerText = "≈ " + (frn * FRN_TO_USD).toFixed(2) + " USD";
+
+    const dzdValue = frn * FRN_TO_DZD;
+    document.getElementById("usdValue").innerText = "≈ " + dzdValue.toFixed(2) + " DZD";
   } catch (err) {
     document.getElementById("balance").innerText = "Erreur de lecture";
     console.error(err);
