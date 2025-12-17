@@ -1,7 +1,7 @@
 // wallet.js
-const TOKEN_ADDRESS = "0x64e73E00a9d37188C0e25EC5cfdDCD856Ad7a77D";
-const RPC = "https://mainnet.xo-dex.com/rpc";
-const FRN_TO_DZD = 120; // 1 FRN = 120 DZD
+const TOKEN_ADDRESS = "0x7EFd1F12A949ba65f0965A21A427d6cb8D03210c";
+const RPC = "https://polygon-mainnet.infura.io";
+const ALG_TO_DZD = 250; // 1 ALG = 250 DZD
 
 let provider, wallet, signer, token, decimals = 18;
 let scanner;
@@ -63,7 +63,7 @@ async function updateBalance() {
     const frn = parseFloat(ethers.utils.formatUnits(raw, decimals));
     document.getElementById("balance").innerText = frn.toFixed(4) + " FRN";
 
-    const dzdValue = frn * FRN_TO_DZD;
+    const dzdValue = alg * ALG_TO_DZD;
     document.getElementById("usdValue").innerText = "≈ " + dzdValue.toFixed(2) + " DZD";
   } catch (err) {
     document.getElementById("balance").innerText = "Erreur de lecture";
@@ -99,9 +99,9 @@ async function sendTokens() {
 }
 
 function saveToHistory(entry) {
-  const history = JSON.parse(localStorage.getItem("frn_history") || "[]");
+  const history = JSON.parse(localStorage.getItem("alg_history") || "[]");
   history.unshift(entry);
-  localStorage.setItem("frn_history", JSON.stringify(history.slice(0, 10)));
+  localStorage.setItem("alg_history", JSON.stringify(history.slice(0, 10)));
 }
 
 function loadHistory() {
@@ -110,7 +110,7 @@ function loadHistory() {
   list.innerHTML = "";
   history.forEach(h => {
     const li = document.createElement("li");
-    li.textContent = `Envoyé ${h.amount} FRN à ${h.to} le ${h.date}`;
+    li.textContent = `Envoyé ${h.amount} ALG à ${h.to} le ${h.date}`;
     list.appendChild(li);
   });
 }
