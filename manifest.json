@@ -1,6 +1,6 @@
 {
-  "name": "FRN Wallet Sécurisé",
-  "short_name": "FRN Wallet",
+  "name": "ALG Wallet Sécurisé",
+  "short_name": "ALG Wallet",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#e0e0e0",
