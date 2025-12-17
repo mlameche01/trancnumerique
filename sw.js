@@ -1,6 +1,6 @@
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open('frn-wallet').then((cache) => {
+    caches.open('alg-wallet').then((cache) => {
       return cache.addAll([
         './',
         './index.html',
