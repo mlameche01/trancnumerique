@@ -1,4 +1,4 @@
-// wallet.js — VERSION STABLE POLYGON (ALG + MATIC)
+// wallet.js — VERSION STABLE POLYGON (ALG + MATIC DISPLAY)
 
 const TOKEN_ADDRESS = "0x7EFd1F12A949ba65f0965A21A427d6cb8D03210c"; // ALG
 const RPC = "https://polygon-rpc.com";
@@ -70,7 +70,7 @@ async function initWallet() {
 }
 
 /* =========================
-   BALANCE (ALG + MATIC)
+   BALANCE (ALG + MATIC DISPLAY)
 ========================= */
 
 async function updateBalance() {
@@ -83,7 +83,7 @@ async function updateBalance() {
     document.getElementById("balance").innerText = alg.toFixed(4) + " ALG";
     document.getElementById("usdValue").innerText = "≈ " + (alg * ALG_TO_DZD).toFixed(2) + " DZD";
 
-    // SOLDE MATIC
+    // SOLDE MATIC (pour frais)
     const maticRaw = await provider.getBalance(wallet.address);
     const matic = parseFloat(ethers.utils.formatEther(maticRaw));
     document.getElementById("maticBalance").innerText = matic.toFixed(4) + " MATIC";
@@ -96,35 +96,28 @@ async function updateBalance() {
 }
 
 /* =========================
-   SEND TOKENS
+   SEND ALG ONLY
 ========================= */
 
 async function sendTokens() {
   const to = document.getElementById("to").value.trim();
   const amount = document.getElementById("amount").value.trim();
   const status = document.getElementById("status");
-  const type = document.getElementById("sendType").value; // "ALG" ou "MATIC"
 
   if (!ethers.utils.isAddress(to)) return alert("Adresse invalide");
   if (!amount || amount <= 0) return alert("Montant invalide");
 
   try {
     status.innerText = "⏳ Transaction en cours...";
-
-    let tx;
-    if (type === "ALG") {
-      tx = await tokenWithSigner.transfer(to, ethers.utils.parseUnits(amount, decimals));
-    } else if (type === "MATIC") {
-      tx = await wallet.sendTransaction({
-        to: to,
-        value: ethers.utils.parseEther(amount)
-      });
-    }
-
+    const tx = await tokenWithSigner.transfer(
+      to,
+      ethers.utils.parseUnits(amount, decimals)
+    );
     await tx.wait();
-    status.innerText = "✅ Transaction confirmée";
 
-    saveToHistory({ to, amount, type, date: new Date().toLocaleString() });
+    status.innerText = "✅ Transaction confirmée";
+    saveToHistory({ to, amount, date: new Date().toLocaleString() });
+
     updateBalance();
     loadHistory();
 
@@ -150,7 +143,7 @@ function loadHistory() {
   list.innerHTML = "";
   h.forEach(tx => {
     const li = document.createElement("li");
-    li.textContent = `${tx.amount} ${tx.type || "ALG"} → ${tx.to}`;
+    li.textContent = `${tx.amount} ALG → ${tx.to}`;
     list.appendChild(li);
   });
 }
