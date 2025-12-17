@@ -1,4 +1,4 @@
-// wallet.js — VERSION STABLE POLYGON (ALG)
+// wallet.js — VERSION STABLE POLYGON (ALG + MATIC)
 
 const TOKEN_ADDRESS = "0x7EFd1F12A949ba65f0965A21A427d6cb8D03210c"; // ALG
 const RPC = "https://polygon-rpc.com";
@@ -70,38 +70,30 @@ async function initWallet() {
 }
 
 /* =========================
-   BALANCE
+   BALANCE (ALG + MATIC)
 ========================= */
 
 async function updateBalance() {
   try {
-    // lecture du solde
+    // SOLDE ALG
     const raw = await token.balanceOf(wallet.address);
+    try { decimals = await token.decimals(); } catch { decimals = 18; }
+    const alg = parseFloat(ethers.utils.formatUnits(raw, decimals));
 
-    // décimales
-    try {
-      decimals = await token.decimals();
-    } catch {
-      decimals = 18;
-    }
+    document.getElementById("balance").innerText = alg.toFixed(4) + " ALG";
+    document.getElementById("usdValue").innerText = "≈ " + (alg * ALG_TO_DZD).toFixed(2) + " DZD";
 
-    // format
-    const alg = parseFloat(
-      ethers.utils.formatUnits(raw, decimals)
-    );
-
-    document.getElementById("balance").innerText =
-      alg.toFixed(4) + " ALG";
-
-    document.getElementById("usdValue").innerText =
-      "≈ " + (alg * ALG_TO_DZD).toFixed(2) + " DZD";
+    // SOLDE MATIC
+    const maticRaw = await provider.getBalance(wallet.address);
+    const matic = parseFloat(ethers.utils.formatEther(maticRaw));
+    document.getElementById("maticBalance").innerText = matic.toFixed(4) + " MATIC";
 
   } catch (e) {
     console.error("BALANCE ERROR:", e);
     document.getElementById("balance").innerText = "Erreur lecture";
+    document.getElementById("maticBalance").innerText = "Erreur lecture";
   }
 }
-
 
 /* =========================
    SEND TOKENS
@@ -111,21 +103,28 @@ async function sendTokens() {
   const to = document.getElementById("to").value.trim();
   const amount = document.getElementById("amount").value.trim();
   const status = document.getElementById("status");
+  const type = document.getElementById("sendType").value; // "ALG" ou "MATIC"
 
   if (!ethers.utils.isAddress(to)) return alert("Adresse invalide");
   if (!amount || amount <= 0) return alert("Montant invalide");
 
   try {
     status.innerText = "⏳ Transaction en cours...";
-    const tx = await tokenWithSigner.transfer(
-      to,
-      ethers.utils.parseUnits(amount, decimals)
-    );
+
+    let tx;
+    if (type === "ALG") {
+      tx = await tokenWithSigner.transfer(to, ethers.utils.parseUnits(amount, decimals));
+    } else if (type === "MATIC") {
+      tx = await wallet.sendTransaction({
+        to: to,
+        value: ethers.utils.parseEther(amount)
+      });
+    }
+
     await tx.wait();
-
     status.innerText = "✅ Transaction confirmée";
-    saveToHistory({ to, amount, date: new Date().toLocaleString() });
 
+    saveToHistory({ to, amount, type, date: new Date().toLocaleString() });
     updateBalance();
     loadHistory();
 
@@ -151,7 +150,7 @@ function loadHistory() {
   list.innerHTML = "";
   h.forEach(tx => {
     const li = document.createElement("li");
-    li.textContent = `${tx.amount} ALG → ${tx.to}`;
+    li.textContent = `${tx.amount} ${tx.type || "ALG"} → ${tx.to}`;
     list.appendChild(li);
   });
 }
