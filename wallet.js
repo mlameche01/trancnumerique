@@ -1,24 +1,25 @@
-// wallet.js
-const TOKEN_ADDRESS = "0x7EFd1F12A949ba65f0965A21A427d6cb8D03210c";
-const RPC = "const RPC = "https://polygon-rpc.com";
-";
-const ALG_TO_DZD = 250; // 1 ALG = 250 DZD
+// wallet.js — VERSION CORRIGÉE POLYGON
 
-let provider, wallet, signer, token, decimals = 18;
+const TOKEN_ADDRESS = "0x7EFd1F12A949ba65f0965A21A427d6cb8D03210c"; // ALG
+const RPC = "https://rpc.ankr.com/polygon"; // RPC Polygon stable
+const ALG_TO_DZD = 250;
+
+let provider, wallet, token, tokenWithSigner;
+let decimals = 18;
 let scanner;
 
+/* =========================
+   PIN MANAGEMENT
+========================= */
+
 window.onload = () => {
-  const pin = localStorage.getItem("alg_pin");
-  if (pin) {
-    document.getElementById("pinLoginBox").style.display = "block";
-  } else {
-    document.getElementById("pinSetupBox").style.display = "block";
-  }
+  const pin = localStorage.getItem("frn_pin");
+  document.getElementById(pin ? "pinLoginBox" : "pinSetupBox").style.display = "block";
 };
 
 function saveNewPIN() {
   const pin = document.getElementById("newPin").value.trim();
-  if (pin.length < 4) return alert("Le code PIN doit contenir au moins 4 chiffres");
+  if (pin.length < 4) return alert("PIN minimum 4 chiffres");
   localStorage.setItem("frn_pin", pin);
   document.getElementById("pinSetupBox").style.display = "none";
   document.getElementById("walletBox").style.display = "block";
@@ -26,56 +27,82 @@ function saveNewPIN() {
 }
 
 function checkPIN() {
-  const entered = document.getElementById("pinInput").value;
-  const saved = localStorage.getItem("frn_pin");
-  if (entered === saved) {
+  if (document.getElementById("pinInput").value === localStorage.getItem("frn_pin")) {
     document.getElementById("pinLoginBox").style.display = "none";
     document.getElementById("walletBox").style.display = "block";
     initWallet();
   } else {
-    alert("❌ Code PIN incorrect");
+    alert("❌ PIN incorrect");
   }
 }
+
+/* =========================
+   WALLET INIT
+========================= */
 
 async function initWallet() {
   provider = new ethers.providers.JsonRpcProvider(RPC);
-  const savedPK = localStorage.getItem("frn_key");
-  wallet = savedPK ? new ethers.Wallet(savedPK) : ethers.Wallet.createRandom();
-  if (!savedPK) localStorage.setItem("frn_key", wallet.privateKey);
-  signer = wallet.connect(provider);
 
-  token = new ethers.Contract(TOKEN_ADDRESS, [
-    { constant: true, inputs: [{ name: "_owner", type: "address" }], name: "balanceOf", outputs: [{ name: "balance", type: "uint256" }], type: "function" },
-    { constant: false, inputs: [{ name: "_to", type: "address" }, { name: "_value", type: "uint256" }], name: "transfer", outputs: [{ name: "success", type: "bool" }], type: "function" },
-    { constant: true, inputs: [], name: "decimals", outputs: [{ name: "", type: "uint8" }], type: "function" }
-  ], signer);
+  let pk = localStorage.getItem("frn_key");
+  if (!pk) {
+    pk = ethers.Wallet.createRandom().privateKey;
+    localStorage.setItem("frn_key", pk);
+  }
+
+  wallet = new ethers.Wallet(pk, provider);
+
+  const ERC20_ABI = [
+    "function balanceOf(address) view returns (uint256)",
+    "function decimals() view returns (uint8)",
+    "function symbol() view returns (string)",
+    "function transfer(address,uint256) returns (bool)"
+  ];
+
+  token = new ethers.Contract(TOKEN_ADDRESS, ERC20_ABI, provider);
+  tokenWithSigner = token.connect(wallet);
 
   document.getElementById("address").innerText = wallet.address;
   document.getElementById("privateKeyBox").value = wallet.privateKey;
+
   generateQRCode(wallet.address);
-  loadHistory();
   updateBalance();
+  loadHistory();
 }
+
+/* =========================
+   BALANCE
+========================= */
 
 async function updateBalance() {
   try {
-    decimals = await token.decimals();
     const raw = await token.balanceOf(wallet.address);
-    const frn = parseFloat(ethers.utils.formatUnits(raw, decimals));
-    document.getElementById("balance").innerText = frn.toFixed(4) + " FRN";
 
-    const dzdValue = alg * ALG_TO_DZD;
-    document.getElementById("usdValue").innerText = "≈ " + dzdValue.toFixed(2) + " DZD";
-  } catch (err) {
-    document.getElementById("balance").innerText = "Erreur de lecture";
-    console.error(err);
+    try {
+      decimals = await token.decimals();
+    } catch {
+      decimals = 18;
+    }
+
+    const alg = parseFloat(
+      ethers.utils.formatUnits(raw, decimals)
+    );
+
+    document.getElementById("balance").innerText =
+      alg.toFixed(4) + " ALG";
+
+    document.getElementById("usdValue").innerText =
+      "≈ " + (alg * ALG_TO_DZD).toFixed(2) + " DZD";
+
+  } catch (e) {
+    console.error("BALANCE ERROR:", e);
+    document.getElementById("balance").innerText =
+      "❌ Erreur de lecture";
   }
 }
 
-function togglePrivateKey() {
-  const box = document.getElementById("privateKeyBox");
-  box.style.display = box.style.display === "none" ? "block" : "none";
-}
+/* =========================
+   SEND TOKENS
+========================= */
 
 async function sendTokens() {
   const to = document.getElementById("to").value.trim();
@@ -83,85 +110,63 @@ async function sendTokens() {
   const status = document.getElementById("status");
 
   if (!ethers.utils.isAddress(to)) return alert("Adresse invalide");
-  if (!to || !amount) return alert("Adresse et montant requis");
+  if (!amount || amount <= 0) return alert("Montant invalide");
 
   try {
-    const tx = await token.transfer(to, ethers.utils.parseUnits(amount, decimals));
-    status.innerText = "⏳ Envoi en cours...";
+    status.innerText = "⏳ Transaction en cours...";
+    const tx = await tokenWithSigner.transfer(
+      to,
+      ethers.utils.parseUnits(amount, decimals)
+    );
     await tx.wait();
-    status.innerText = "✅ Envoyé avec succès !";
+
+    status.innerText = "✅ Transaction confirmée";
+
     saveToHistory({ to, amount, date: new Date().toLocaleString() });
     updateBalance();
     loadHistory();
-  } catch (err) {
-    status.innerText = "❌ Erreur: " + err.message;
-    console.error(err);
+
+  } catch (e) {
+    console.error(e);
+    status.innerText = "❌ Échec transaction";
   }
 }
 
+/* =========================
+   HISTORY
+========================= */
+
 function saveToHistory(entry) {
-  const history = JSON.parse(localStorage.getItem("alg_history") || "[]");
-  history.unshift(entry);
-  localStorage.setItem("alg_history", JSON.stringify(history.slice(0, 10)));
+  const h = JSON.parse(localStorage.getItem("frn_history") || "[]");
+  h.unshift(entry);
+  localStorage.setItem("frn_history", JSON.stringify(h.slice(0, 10)));
 }
 
 function loadHistory() {
-  const history = JSON.parse(localStorage.getItem("frn_history") || "[]");
+  const h = JSON.parse(localStorage.getItem("frn_history") || "[]");
   const list = document.getElementById("historyList");
   list.innerHTML = "";
-  history.forEach(h => {
+  h.forEach(tx => {
     const li = document.createElement("li");
-    li.textContent = `Envoyé ${h.amount} ALG à ${h.to} le ${h.date}`;
+    li.textContent = `${tx.amount} ALG → ${tx.to}`;
     list.appendChild(li);
   });
 }
 
+/* =========================
+   UI UTILITIES
+========================= */
+
+function togglePrivateKey() {
+  const box = document.getElementById("privateKeyBox");
+  box.style.display = box.style.display === "none" ? "block" : "none";
+}
+
 function generateQRCode(address) {
-  const qrContainer = document.getElementById("qrcode");
-  qrContainer.innerHTML = "";
-  new QRCode(qrContainer, {
+  document.getElementById("qrcode").innerHTML = "";
+  new QRCode("qrcode", {
     text: address,
     width: 128,
-    height: 128,
-    colorDark: "#000000",
-    colorLight: "#ffffff",
-    correctLevel: QRCode.CorrectLevel.H
-  });
-}
-
-function startScanner() {
-  const reader = document.getElementById("reader");
-  reader.style.display = "block";
-
-  if (scanner) {
-    scanner.stop().then(() => {
-      scanner.clear();
-      runScanner();
-    });
-  } else {
-    runScanner();
-  }
-}
-
-function runScanner() {
-  scanner = new Html5Qrcode("reader");
-  scanner.start(
-    { facingMode: "environment" },
-    { fps: 10, qrbox: 250 },
-    (decodedText) => {
-      if (ethers.utils.isAddress(decodedText.trim())) {
-        document.getElementById("to").value = decodedText.trim();
-        scanner.stop().then(() => {
-          document.getElementById("reader").style.display = "none";
-          scanner.clear();
-          scanner = null;
-        });
-      } else {
-        alert("QR Code invalide : pas une adresse Ethereum");
-      }
-    },
-    (err) => {}
-  ).catch(err => {
-    alert("Erreur accès caméra : " + err);
+    height: 128
   });
 }
