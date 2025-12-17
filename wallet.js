@@ -1,4 +1,4 @@
-// wallet.js — VERSION STABLE POLYGON (ALG + MATIC DISPLAY)
+// wallet.js — VERSION POLYGON (ALG + MATIC DISPLAY)
 
 const TOKEN_ADDRESS = "0x7EFd1F12A949ba65f0965A21A427d6cb8D03210c"; // ALG
 const RPC = "https://polygon-rpc.com";
@@ -6,10 +6,6 @@ const ALG_TO_DZD = 250;
 
 let provider, wallet, token, tokenWithSigner;
 let decimals = 18;
-
-/* =========================
-   PIN
-========================= */
 
 window.onload = () => {
   const pin = localStorage.getItem("alg_pin");
@@ -41,36 +37,41 @@ function checkPIN() {
 ========================= */
 
 async function initWallet() {
-  provider = new ethers.providers.JsonRpcProvider(RPC);
+  try {
+    provider = new ethers.providers.JsonRpcProvider(RPC);
 
-  let pk = localStorage.getItem("alg_key");
-  if (!pk) {
-    pk = ethers.Wallet.createRandom().privateKey;
-    localStorage.setItem("alg_key", pk);
+    let pk = localStorage.getItem("alg_key");
+    if (!pk) {
+      pk = ethers.Wallet.createRandom().privateKey;
+      localStorage.setItem("alg_key", pk);
+    }
+
+    wallet = new ethers.Wallet(pk, provider);
+
+    const ERC20_ABI = [
+      "function balanceOf(address) view returns (uint256)",
+      "function decimals() view returns (uint8)",
+      "function symbol() view returns (string)",
+      "function transfer(address,uint256) returns (bool)"
+    ];
+
+    token = new ethers.Contract(TOKEN_ADDRESS, ERC20_ABI, provider);
+    tokenWithSigner = token.connect(wallet);
+
+    document.getElementById("address").innerText = wallet.address;
+    document.getElementById("privateKeyBox").value = wallet.privateKey;
+
+    generateQRCode(wallet.address);
+    await updateBalance(); // ← important : await pour bien charger le solde
+    loadHistory();
+
+  } catch (e) {
+    console.error("INIT WALLET ERROR:", e);
   }
-
-  wallet = new ethers.Wallet(pk, provider);
-
-  const ERC20_ABI = [
-    "function balanceOf(address) view returns (uint256)",
-    "function decimals() view returns (uint8)",
-    "function symbol() view returns (string)",
-    "function transfer(address,uint256) returns (bool)"
-  ];
-
-  token = new ethers.Contract(TOKEN_ADDRESS, ERC20_ABI, provider);
-  tokenWithSigner = token.connect(wallet);
-
-  document.getElementById("address").innerText = wallet.address;
-  document.getElementById("privateKeyBox").value = wallet.privateKey;
-
-  generateQRCode(wallet.address);
-  updateBalance();
-  loadHistory();
 }
 
 /* =========================
-   BALANCE (ALG + MATIC DISPLAY)
+   UPDATE BALANCE
 ========================= */
 
 async function updateBalance() {
@@ -80,18 +81,20 @@ async function updateBalance() {
     try { decimals = await token.decimals(); } catch { decimals = 18; }
     const alg = parseFloat(ethers.utils.formatUnits(raw, decimals));
 
-    document.getElementById("balance").innerText = alg.toFixed(4) + " ALG";
-    document.getElementById("usdValue").innerText = "≈ " + (alg * ALG_TO_DZD).toFixed(2) + " DZD";
+    const balanceEl = document.getElementById("balance");
+    const usdEl = document.getElementById("usdValue");
+    if (balanceEl) balanceEl.innerText = alg.toFixed(4) + " ALG";
+    if (usdEl) usdEl.innerText = "≈ " + (alg * ALG_TO_DZD).toFixed(2) + " DZD";
 
     // SOLDE MATIC (pour frais)
     const maticRaw = await provider.getBalance(wallet.address);
     const matic = parseFloat(ethers.utils.formatEther(maticRaw));
-    document.getElementById("maticBalance").innerText = matic.toFixed(4) + " MATIC";
+
+    const maticEl = document.getElementById("maticBalance");
+    if (maticEl) maticEl.innerText = matic.toFixed(4) + " MATIC";
 
   } catch (e) {
-    console.error("BALANCE ERROR:", e);
-    document.getElementById("balance").innerText = "Erreur lecture";
-    document.getElementById("maticBalance").innerText = "Erreur lecture";
+    console.error("UPDATE BALANCE ERROR:", e);
   }
 }
 
@@ -118,7 +121,7 @@ async function sendTokens() {
     status.innerText = "✅ Transaction confirmée";
     saveToHistory({ to, amount, date: new Date().toLocaleString() });
 
-    updateBalance();
+    await updateBalance();
     loadHistory();
 
   } catch (e) {
@@ -140,6 +143,7 @@ function saveToHistory(tx) {
 function loadHistory() {
   const h = JSON.parse(localStorage.getItem("alg_history") || "[]");
   const list = document.getElementById("historyList");
+  if (!list) return;
   list.innerHTML = "";
   h.forEach(tx => {
     const li = document.createElement("li");
@@ -154,11 +158,14 @@ function loadHistory() {
 
 function togglePrivateKey() {
   const box = document.getElementById("privateKeyBox");
+  if (!box) return;
   box.style.display = box.style.display === "none" ? "block" : "none";
 }
 
 function generateQRCode(address) {
-  document.getElementById("qrcode").innerHTML = "";
+  const qrEl = document.getElementById("qrcode");
+  if (!qrEl) return;
+  qrEl.innerHTML = "";
   new QRCode("qrcode", {
     text: address,
     width: 128,
