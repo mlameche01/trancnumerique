@@ -75,14 +75,17 @@ async function initWallet() {
 
 async function updateBalance() {
   try {
+    // lecture du solde
     const raw = await token.balanceOf(wallet.address);
 
+    // décimales
     try {
       decimals = await token.decimals();
     } catch {
       decimals = 18;
     }
 
+    // format
     const alg = parseFloat(
       ethers.utils.formatUnits(raw, decimals)
     );
@@ -95,10 +98,10 @@ async function updateBalance() {
 
   } catch (e) {
     console.error("BALANCE ERROR:", e);
-    document.getElementById("balance").innerText = "0.0000 ALG";
-    document.getElementById("usdValue").innerText = "≈ 0.00 DZD";
+    document.getElementById("balance").innerText = "Erreur lecture";
   }
 }
+
 
 /* =========================
    SEND TOKENS
