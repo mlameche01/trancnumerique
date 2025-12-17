@@ -1,7 +1,7 @@
 // wallet.js — VERSION STABLE POLYGON (ALG)
 
 const TOKEN_ADDRESS = "0x7EFd1F12A949ba65f0965A21A427d6cb8D03210c"; // ALG
-const RPC = "https://rpc.ankr.com/polygon";
+const RPC = "https://polygon-rpc.com";
 const ALG_TO_DZD = 250;
 
 let provider, wallet, token, tokenWithSigner;
