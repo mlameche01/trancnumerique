@@ -1,33 +1,33 @@
-// wallet.js — VERSION CORRIGÉE POLYGON
+// wallet.js — VERSION STABLE POLYGON (ALG)
 
 const TOKEN_ADDRESS = "0x7EFd1F12A949ba65f0965A21A427d6cb8D03210c"; // ALG
-const RPC = "https://rpc.ankr.com/polygon"; // RPC Polygon stable
+const RPC = "https://rpc.ankr.com/polygon";
 const ALG_TO_DZD = 250;
 
 let provider, wallet, token, tokenWithSigner;
 let decimals = 18;
-let scanner;
 
 /* =========================
-   PIN MANAGEMENT
+   PIN
 ========================= */
 
 window.onload = () => {
-  const pin = localStorage.getItem("frn_pin");
+  const pin = localStorage.getItem("alg_pin");
   document.getElementById(pin ? "pinLoginBox" : "pinSetupBox").style.display = "block";
 };
 
 function saveNewPIN() {
   const pin = document.getElementById("newPin").value.trim();
   if (pin.length < 4) return alert("PIN minimum 4 chiffres");
-  localStorage.setItem("frn_pin", pin);
+
+  localStorage.setItem("alg_pin", pin);
   document.getElementById("pinSetupBox").style.display = "none";
   document.getElementById("walletBox").style.display = "block";
   initWallet();
 }
 
 function checkPIN() {
-  if (document.getElementById("pinInput").value === localStorage.getItem("frn_pin")) {
+  if (document.getElementById("pinInput").value === localStorage.getItem("alg_pin")) {
     document.getElementById("pinLoginBox").style.display = "none";
     document.getElementById("walletBox").style.display = "block";
     initWallet();
@@ -37,16 +37,16 @@ function checkPIN() {
 }
 
 /* =========================
-   WALLET INIT
+   INIT WALLET
 ========================= */
 
 async function initWallet() {
   provider = new ethers.providers.JsonRpcProvider(RPC);
 
-  let pk = localStorage.getItem("frn_key");
+  let pk = localStorage.getItem("alg_key");
   if (!pk) {
     pk = ethers.Wallet.createRandom().privateKey;
-    localStorage.setItem("frn_key", pk);
+    localStorage.setItem("alg_key", pk);
   }
 
   wallet = new ethers.Wallet(pk, provider);
@@ -95,8 +95,8 @@ async function updateBalance() {
 
   } catch (e) {
     console.error("BALANCE ERROR:", e);
-    document.getElementById("balance").innerText =
-      "❌ Erreur de lecture";
+    document.getElementById("balance").innerText = "0.0000 ALG";
+    document.getElementById("usdValue").innerText = "≈ 0.00 DZD";
   }
 }
 
@@ -121,14 +121,14 @@ async function sendTokens() {
     await tx.wait();
 
     status.innerText = "✅ Transaction confirmée";
-
     saveToHistory({ to, amount, date: new Date().toLocaleString() });
+
     updateBalance();
     loadHistory();
 
   } catch (e) {
     console.error(e);
-    status.innerText = "❌ Échec transaction";
+    status.innerText = "❌ Échec de la transaction";
   }
 }
 
@@ -136,14 +136,14 @@ async function sendTokens() {
    HISTORY
 ========================= */
 
-function saveToHistory(entry) {
-  const h = JSON.parse(localStorage.getItem("frn_history") || "[]");
-  h.unshift(entry);
-  localStorage.setItem("frn_history", JSON.stringify(h.slice(0, 10)));
+function saveToHistory(tx) {
+  const h = JSON.parse(localStorage.getItem("alg_history") || "[]");
+  h.unshift(tx);
+  localStorage.setItem("alg_history", JSON.stringify(h.slice(0, 10)));
 }
 
 function loadHistory() {
-  const h = JSON.parse(localStorage.getItem("frn_history") || "[]");
+  const h = JSON.parse(localStorage.getItem("alg_history") || "[]");
   const list = document.getElementById("historyList");
   list.innerHTML = "";
   h.forEach(tx => {
@@ -154,7 +154,7 @@ function loadHistory() {
 }
 
 /* =========================
-   UI UTILITIES
+   UI
 ========================= */
 
 function togglePrivateKey() {
