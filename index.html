@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>FRN Wallet Sécurisé</title>
+  <title>ALG Wallet Sécurisé</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#424242" />
   <link rel="manifest" href="manifest.json" />
@@ -116,14 +116,14 @@
 <body>
   <header>
     <div>
-      <h1 id="title">🔐 FRN Wallet Sécurisé</h1>
+      <h1 id="title">🔐 ALG Wallet Sécurisé</h1>
       <button id="langSwitch" onclick="toggleLang()" style="background: none; border: none; font-size: 1.5rem;">🇫🇷</button>
     </div>
   </header>
   <main>
     <div class="card" id="pinSetupBox" style="display:none;">
       <div class="intro" id="intro1">
-        💡 <strong>Franc Numérique (FRN)</strong> est un token digital adossé à la blockchain XODEX, visant à simplifier les échanges en Afrique.  
+        💡 <strong>Algiers Radio (ALG)</strong> est un token digital adossé à la blockchain XODEX, visant à simplifier les échanges en Afrique.  
         Il permet des transactions rapides, sécurisées et sans frais.
       </div>
       <h3 id="pinCreate">Créer un code PIN</h3>
@@ -133,7 +133,7 @@
 
     <div class="card" id="pinLoginBox" style="display:none;">
       <div class="intro" id="intro2">
-        💡 <strong>Franc Numérique (FRN)</strong> est un token digital adossé à la blockchain XODEX, visant à simplifier les échanges en Afrique.  
+        💡 <strong>Algiers Radio (ALG)</strong> est un token digital adossé à la blockchain XODEX, visant à simplifier les échanges en Afrique.  
         Il permet des transactions rapides, sécurisées et sans frais.
       </div>
       <h3 id="pinEnter">Entrez votre code PIN</h3>
@@ -145,15 +145,15 @@
       <p><strong id="addressLabel">Adresse :</strong> <span id="address">...</span></p>
 
       <a href="https://forms.gle/QK4vQdaHgee31bGH9" target="_blank">
-        <button id="faucetGet">🚰 Obtenir FRN (baridiweb)</button>
+        <button id="faucetGet">🚰 Obtenir ALG (baridiweb)</button>
       </a>
       <a href="https://docs.google.com/forms/d/e/1FAIpQLSePbCfjdDIHt7TQcS_Ibo9JppbBlX4kLzLazuwFOrbnYyGHsA/viewform?usp=dialog" target="_blank">
-        <button id="faucetSell">🚰 Vendre FRN (baridiweb)</button>
+        <button id="faucetSell">🚰 Vendre ALG (baridiweb)</button>
       </a>
 
       <div id="qrcode"></div>
 
-      <div class="balance" id="balance">... FRN</div>
+      <div class="balance" id="balance">... ALG</div>
       <div class="usd" id="usdValue">≈ ... DZD</div>
 
       <button onclick="togglePrivateKey()">Voir/Masquer Clé privée</button>
@@ -162,11 +162,11 @@
       <div class="note">
         📝 <strong>Important :</strong><br>
         Sauvegardez votre clé privée dans un endroit sécurisé.<br>
-        En cas de perte, contactez <strong>Mounir Le Choyé</strong> sur Facebook avec votre clé OU accédez à cette page :<br>
+        En cas de perte, contactez <strong>Radioalgerie</strong> sur Facebook avec votre clé OU accédez à cette page :<br>
         <a href="https://mlameche01.github.io/Transfert/" target="_blank">https://mlameche01.github.io/Transfert/</a>
       </div>
 
-      <h3>Envoyer des FRN</h3>
+      <h3>Envoyer des ALG</h3>
       <input id="to" placeholder="Adresse destinataire (0x...)" />
       <button onclick="startScanner()">📷 Scanner QR</button>
       <div id="reader" style="display:none;"></div>
@@ -206,23 +206,23 @@
 
       const t = {
         fr: {
-          title: "🔐 FRN Wallet Sécurisé",
+          title: "🔐 ALG Wallet Sécurisé",
           pinCreate: "Créer un code PIN",
           pinEnter: "Entrez votre code PIN",
           send: "Envoyer",
           addressLabel: "Adresse :",
-          faucetGet: "🚰 Obtenir FRN (baridiweb)",
-          faucetSell: "🚰 Vendre FRN (baridiweb)",
+          faucetGet: "🚰 Obtenir ALG (baridiweb)",
+          faucetSell: "🚰 Vendre ALG (baridiweb)",
           historyTitle: "Historique des envois"
         },
         en: {
-          title: "🔐 FRN Secure Wallet",
+          title: "🔐 ALG Secure Wallet",
           pinCreate: "Create a PIN Code",
           pinEnter: "Enter your PIN Code",
           send: "Send",
           addressLabel: "Address:",
-          faucetGet: "🚰 Get FRN (baridiweb)",
-          faucetSell: "🚰 Sell FRN (baridiweb)",
+          faucetGet: "🚰 Get ALG (baridiweb)",
+          faucetSell: "🚰 Sell ALG (baridiweb)",
           historyTitle: "Transaction History"
         }
       };
