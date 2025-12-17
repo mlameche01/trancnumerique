@@ -1,13 +1,13 @@
 // wallet.js
 const TOKEN_ADDRESS = "0x7EFd1F12A949ba65f0965A21A427d6cb8D03210c";
-const RPC = "https://137.rpc.thirdweb.com/";
+const RPC = "https://137.rpc.thirdweb.com/${THIRDWEB_API_KEY}";
 const ALG_TO_DZD = 250; // 1 ALG = 250 DZD
 
 let provider, wallet, signer, token, decimals = 18;
 let scanner;
 
 window.onload = () => {
-  const pin = localStorage.getItem("frn_pin");
+  const pin = localStorage.getItem("alg_pin");
   if (pin) {
     document.getElementById("pinLoginBox").style.display = "block";
   } else {
