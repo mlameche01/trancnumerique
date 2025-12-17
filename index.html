@@ -17,18 +17,21 @@ ul { padding-left: 20px; }
 </head>
 <body>
 
+<!-- PIN Setup -->
 <div id="pinSetupBox" class="box" style="display:none;">
   <h2>Créer un PIN</h2>
   <input type="password" id="newPin" placeholder="4 chiffres minimum">
   <button onclick="saveNewPIN()">Valider PIN</button>
 </div>
 
+<!-- PIN Login -->
 <div id="pinLoginBox" class="box" style="display:none;">
   <h2>Entrer PIN</h2>
   <input type="password" id="pinInput" placeholder="Votre PIN">
   <button onclick="checkPIN()">Se connecter</button>
 </div>
 
+<!-- Wallet -->
 <div id="walletBox" class="box" style="display:none;">
   <h2>Wallet ALG - Polygon</h2>
   <div><strong>Adresse :</strong> <span id="address"></span></div>
@@ -53,9 +56,8 @@ ul { padding-left: 20px; }
 
 <script>
 // =========================
-// wallet.js intégré
+// Configuration
 // =========================
-
 const TOKEN_ADDRESS = "0x7EFd1F12A949ba65f0965A21A427d6cb8D03210c"; // ALG
 const RPC = "https://polygon-rpc.com";
 const ALG_TO_DZD = 250;
@@ -63,6 +65,9 @@ const ALG_TO_DZD = 250;
 let provider, wallet, token, tokenWithSigner;
 let decimals = 18;
 
+// =========================
+// PIN
+// =========================
 window.onload = () => {
   const pin = localStorage.getItem("alg_pin");
   document.getElementById(pin ? "pinLoginBox" : "pinSetupBox").style.display = "block";
@@ -71,7 +76,6 @@ window.onload = () => {
 function saveNewPIN() {
   const pin = document.getElementById("newPin").value.trim();
   if (pin.length < 4) return alert("PIN minimum 4 chiffres");
-
   localStorage.setItem("alg_pin", pin);
   document.getElementById("pinSetupBox").style.display = "none";
   document.getElementById("walletBox").style.display = "block";
@@ -89,15 +93,17 @@ function checkPIN() {
 }
 
 // =========================
-// INIT WALLET
+// Init Wallet
 // =========================
 async function initWallet() {
   try {
     provider = new ethers.providers.JsonRpcProvider(RPC);
 
+    // Récupération ou création clé privée
     let pk = localStorage.getItem("alg_key");
     if (!pk) {
-      pk = ethers.Wallet.createRandom().privateKey;
+      const newWallet = ethers.Wallet.createRandom();
+      pk = newWallet.privateKey;
       localStorage.setItem("alg_key", pk);
     }
 
@@ -113,20 +119,20 @@ async function initWallet() {
     token = new ethers.Contract(TOKEN_ADDRESS, ERC20_ABI, provider);
     tokenWithSigner = token.connect(wallet);
 
+    // Affichage
     document.getElementById("address").innerText = wallet.address;
     document.getElementById("privateKeyBox").value = wallet.privateKey;
 
     generateQRCode(wallet.address);
     await updateBalance();
     loadHistory();
-
   } catch (e) {
     console.error("INIT WALLET ERROR:", e);
   }
 }
 
 // =========================
-// UPDATE BALANCE
+// Update Balance
 // =========================
 async function updateBalance() {
   try {
@@ -147,7 +153,7 @@ async function updateBalance() {
 }
 
 // =========================
-// SEND ALG ONLY
+// Send ALG Only
 // =========================
 async function sendTokens() {
   const to = document.getElementById("to").value.trim();
@@ -159,10 +165,7 @@ async function sendTokens() {
 
   try {
     status.innerText = "⏳ Transaction en cours...";
-    const tx = await tokenWithSigner.transfer(
-      to,
-      ethers.utils.parseUnits(amount, decimals)
-    );
+    const tx = await tokenWithSigner.transfer(to, ethers.utils.parseUnits(amount, decimals));
     await tx.wait();
 
     status.innerText = "✅ Transaction confirmée";
@@ -170,7 +173,6 @@ async function sendTokens() {
 
     await updateBalance();
     loadHistory();
-
   } catch (e) {
     console.error(e);
     status.innerText = "❌ Échec de la transaction";
@@ -178,7 +180,7 @@ async function sendTokens() {
 }
 
 // =========================
-// HISTORY
+// History
 // =========================
 function saveToHistory(tx) {
   const h = JSON.parse(localStorage.getItem("alg_history") || "[]");
